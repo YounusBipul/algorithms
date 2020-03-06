@@ -1,0 +1,459 @@
+<html>
+    <head>
+        <title>Algorithms</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="font-awesome.css" >
+        <style>
+            .heading{
+                text-align: center;
+                margin: 0 -15px;
+                padding: 15px;
+                background: #868688;
+                color: whitesmoke;
+                font-family: monospace;
+            }
+            td{
+                border: 1px solid #000;
+                height: 30px;
+                width: 30px;
+                transition: all 0.5s linear ;
+                cursor: pointer;
+                
+            }
+            #input-settings{
+                margin-bottom: 20px;
+            }
+            .fa-angle-right{content:"\f105"}
+            
+            .visited{
+                animation-name: visitedAnimation;
+                animation-duration: 1.5s;
+                animation-timing-function: ease-out;
+                animation-delay: 0.5s;
+                animation-direction: alternate;
+                animation-iteration-count: 1;
+                animation-fill-mode: forwards;
+                animation-play-state: running;
+            }
+            #tutorial-modal{
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 100%;
+                background: rgba(0,0,0,0.5);
+            }
+            #tutorial-modal-content{
+                position: fixed;
+                top: 125px;
+                border: 1px solid black;
+                width: 25%;
+                padding: 2% 5%;
+                border-radius: 5px;
+                left: 38%;
+                background: #ccc;
+            }
+            #tutorial-modal-content >h5{
+                text-align: center;
+                margin-top: 10px;
+                font-family: cursive;
+            }
+            .close-modal-button{
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                padding: 5px 9px;
+                border: 1px solid black;
+                border-radius: 15px;
+                cursor: pointer;
+                font-weight: bold;
+                background: red;
+            }
+            .menu-div{
+                padding: 1%;
+                background: #DEE0E0;
+                margin: 0 -1%;
+                box-shadow: rgb(189, 195, 199) 0px 10px 6px -6px;
+            }
+            .pull-right{
+                float: right;
+            }
+
+        </style>
+    </head>
+    <body style="padding: 0 1%;">
+        <h1 class="heading">
+            Algorithms
+        </h1>
+        <div class="mb-4 menu-div">
+            <select id="algorithm" class="btn btn-primary">
+                <option value='dfs'>DFS</option>
+                <option value='bfs'>BFS</option>
+                <option value='dijkstra'>Dijkstra</option>
+            </select>
+            <!-- <button onclick="generateGrid()">Reset</button> -->
+            
+            <button onclick="setStartAction()" class="btn btn-primary">Set Start Location</button>
+            <button onclick="setDestination()" class="btn btn-primary">Set Destination</button>
+            <button onclick="runAlgorithm()" class="btn btn-primary">Visualize</button>
+
+            <button onclick="reset()" class="btn btn-info pull-right">Reset</button>
+            <button class="btn btn-danger pull-right mr-1" onclick="setWall(this)">Add Wall</button>
+
+        </div>
+        
+        <table id="grid" class="ml-auto mr-auto">
+            
+        </table>
+
+        <!-- need to add a tutorial modal-->
+        <div id="tutorial-modal">
+            <div id="tutorial-modal-content">
+                <h6 class="close-modal-button" onclick="closeModal()">X</h6>
+                <h5><u>User Gruide</u></h5>
+                <ol>
+                    <li>Selecet Starting point</li>
+                    <li>Select Destination</li>
+                    <li>Add wall (optional)</li>
+                    <li>Select Algorithm</li>
+                    <li>Click on visualize</li>
+                </ol>
+            </div>
+        </div>
+        
+       
+    </body>
+    <script>
+        var SelecetedTileColor="transparent";
+        var actionToBeTaken="";
+        var element;
+        var startingPoint = null;
+        var destinationPoint= null;
+        var grid_info = new Object();
+        var weight_info = new Object();
+        var is_visited = new Object();
+        var parent = new Object();
+        var distance =  new Object();
+        var rows,cols;
+
+        //modal close
+        function closeModal(){
+            document.getElementById('tutorial-modal').style.display="none";
+        }
+
+        //reset
+        function reset(){
+            SelecetedTileColor="transparent";
+            actionToBeTaken="";
+            element;
+            startingPoint = null;
+            destinationPoint= null;
+            grid_info = {};
+            weight_info = {};
+            is_visited = {};
+            parent = {};
+            distance =  {};
+            generateGrid();
+        }
+
+        //initializes connected nodes
+        function initializeConnectedNodes(i,j){
+            var arr=[];
+            var weight = [];
+            var c_id="";
+            var temp;
+            
+            //left node
+            if(j-1>=0){
+                temp= j-1;
+                c_id= i.toString()+"_"+temp.toString();
+                arr.push(c_id);
+                weight.push(1);
+            }
+            //up node
+            if(i-1>=0){
+                temp = i-1;
+                c_id= temp.toString()+"_"+j.toString();
+                arr.push(c_id);
+                weight.push(1);
+            }
+            //down node
+            if(i+1<rows){
+                temp= i+1;
+                c_id= temp.toString()+"_"+j.toString()
+                arr.push(c_id);
+                weight.push(1);
+            }
+            //right node
+            if(j+1<cols){
+                temp= j+1;
+                c_id= i.toString()+"_"+temp.toString();
+                arr.push(c_id);
+                weight.push(1);
+            }
+            
+            grid_info[i.toString()+"_"+j.toString()]= arr;
+            weight_info[i.toString()+"_"+j.toString()]= weight;
+            is_visited[i.toString()+"_"+j.toString()]= 0;
+            parent[i.toString()+"_"+j.toString()]= null;
+            distance[i.toString()+"_"+j.toString()]= Number.MAX_SAFE_INTEGER;
+        }
+        
+        //generates the grid in UI and grid_info for calculation
+        function generateGrid(){
+            // var rows= document.getElementById('num_of_rows').value;
+            // var cols= document.getElementById('num_of_cols').value;
+            rows=10;
+            cols= 15;
+            var i,j,id;
+            var colString="";
+            var rowString="";
+            if(rows < 0 || cols < 0){
+                alert("Non Zero value rewuired");
+                return;
+            }
+
+            // for (i=0; i<cols; i++){
+            //     colString+="<td onclick='action(this)' id='"+i+"'></td>";
+            // }
+            // for (i=0; i<rows; i++){
+            //     rowString+="<tr>"+colString+"</tr>";
+            // }
+            // document.getElementById('grid').innerHTML=rowString;
+
+            document.getElementById('grid').innerHTML = "";
+            grid_info = {};
+            is_visited = {};
+            for(i=0; i<rows; i++){
+                colString="";
+                for(j=0; j<cols; j++){
+                    id= i.toString()+"_"+j.toString();
+                    colString+= "<td onclick='action(this)' id='"+id+"'>"+id+"</td>"
+
+                    initializeConnectedNodes(i,j);
+                }
+                rowString="<tr>"+colString+"</tr>";
+                document.getElementById('grid').innerHTML+=rowString;
+            }
+            // dfs("0_0","3_3");
+            
+        }
+
+        function removeThisFromConnectedNodeList(element_id){
+            var splited= element_id.split("_");
+            var row= parseInt(splited[0]);
+            var col=  parseInt(splited[1]);
+            var neighbour;
+
+            if(row-1 >= 0){
+                // x.splice(x.indexOf(3),1);
+                neighbour= (row-1).toString()+"_"+col.toString();
+                var x= grid_info[neighbour].indexOf(element_id);
+                if(x!=-1){
+                    grid_info[neighbour].splice(x,1);
+                }
+            }
+            if(row+1 < rows){
+                neighbour= (row+1).toString()+"_"+col.toString();
+                var x= grid_info[neighbour].indexOf(element_id);
+                if(x!=-1){
+                    grid_info[neighbour].splice(x,1);
+                }
+            }
+            if(col-1 >= 0){
+                neighbour= row.toString()+"_"+(col-1).toString();
+                var x= grid_info[neighbour].indexOf(element_id);
+                if(x!=-1){
+                    grid_info[neighbour].splice(x,1);
+                }
+            }
+            if(col+1 < cols){
+                neighbour= row.toString()+"_"+(col+1).toString();
+                var x= grid_info[neighbour].indexOf(element_id);
+                if(x!=-1){
+                    grid_info[neighbour].splice(x,1);
+                }
+            }
+            
+        }
+
+        //actions to be taken when cell is clicked
+        function action(ele){
+            if(actionToBeTaken == "colorThis"){
+                ele.style.background=SelecetedTileColor;
+            }
+            else if(actionToBeTaken == "setStart"){
+                if(startingPoint!=null){
+                    startingPoint.innerHTML="";
+                }
+                ele.innerHTML="<img src='car.png' style='height: 15px; width: 15px;'>";
+                startingPoint= ele;
+            }
+            else if(actionToBeTaken == "setDestination"){
+                if(destinationPoint!=null){
+                    destinationPoint.innerHTML="";
+                }
+                ele.innerHTML="<img src='location.png' style='height: 15px; width: 15px;'>";
+                destinationPoint= ele;
+            }
+            else if(actionToBeTaken == "setWall"){
+                removeThisFromConnectedNodeList(ele.id);
+                ele.style.background= "red";
+            }
+        }
+
+        //dfs algorithm
+        function dfs(starting_node, finishing_node){
+            var stack=[];
+            var currentNode, adj,i;
+            stack.push(starting_node);
+            is_visited[starting_node]=1;
+            document.getElementById(starting_node).style.background="yellow";
+            stack.push(grid_info[starting_node].pop());
+            while(stack.length != 0){
+                currentNode = stack[stack.length-1];
+                document.getElementById(currentNode).style.background="yellow";
+                if(currentNode == finishing_node){
+                    break;
+                }
+                if(grid_info[currentNode].length == 0){
+                    is_visited[currentNode]=1;
+                    stack.pop();
+                }
+                else{
+                    adj = grid_info[currentNode].pop();
+                    if(is_visited[adj] == 0){
+                        stack.push(adj);
+                        is_visited[adj]=1;
+                    }    
+                }
+                
+            }
+        }
+
+        //bfs algorithm
+        function bfs(starting_node, finishing_node){
+            var stack=[];
+            var currentNode, adj,i;
+            stack.push(starting_node);
+            while(stack.length != 0){
+                currentNode = stack[0];
+                stack.splice(0,1);
+                is_visited[currentNode]=1;
+                // document.getElementById(currentNode).style.background="yellow";
+                if(currentNode == finishing_node){
+                    break;
+                }
+
+                for(i=0; i< grid_info[currentNode].length ;i++){
+                    adj= grid_info[currentNode][i];
+                    if(is_visited[adj]==0){
+                        stack.push(adj);
+                    }
+                }
+                grid_info[currentNode]=[];
+            }
+        }
+
+        //dijkstra's Algorithm
+        function dijkstra(starting_node, finishing_node){
+            var queue= [];
+            var currentNode, adj, i, new_distance;
+            queue.push(starting_node);
+            distance[starting_node]=0;
+            while(queue.length != 0){
+                // console.log(queue);
+                currentNode = queue[0];
+                queue.splice(0,1);
+                is_visited[currentNode]=1;
+                if(currentNode == finishing_node){
+                    break;
+                }
+                for(i=0; i<grid_info[currentNode].length; i++){
+                    adj = grid_info[currentNode][i];
+                    if(queue.indexOf(adj)== -1){ // not in array
+                        if(is_visited[adj]==0){
+                            queue.push(adj);
+                        }
+                    }
+                    
+                    new_distance = weight_info[currentNode][i]+distance[currentNode];
+                    // console.log(currentNode, adj, distance[currentNode], weight_info[currentNode][i], new_distance);
+                    if(new_distance <= distance[adj]){
+                        distance[adj]= new_distance;
+                        parent[adj]= currentNode;
+                        console.log(parent[adj]);
+                    }
+                }
+
+            }
+        }
+
+        function setWall(ele){
+            actionToBeTaken="setWall";
+        }
+
+        function setStartAction(){
+            actionToBeTaken="setStart";
+            var all = document.getElementsByTagName('td');
+            for(let i=0; i<all.length; i++){
+                all[i].style.cursor= "url('car.png'), auto !important";
+            }
+
+        }
+
+        function setDestination(){
+            actionToBeTaken="setDestination";
+        }
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function colorNodes(color){
+            for(var i in is_visited){
+                time=1000;
+                // console.log(i, is_visited[i]);
+                if(is_visited[i]==1){
+                    document.getElementById(i).classList.add('visited');
+                    document.getElementById(i).style.background=color;
+                }
+            }
+        }
+
+        function colorPath(visitedNodeColor, PathColor){
+            var currentNode;
+            var finishing_node= destinationPoint.id;
+            colorNodes(visitedNodeColor);
+            currentNode = parent[finishing_node];
+            document.getElementById(finishing_node).classList.add('visited');
+            document.getElementById(finishing_node).style.background=PathColor;
+            // document.getElementById(finishing_node).style.background='yellow';
+            while(currentNode != null){
+                document.getElementById(currentNode).classList.add('visited');
+                document.getElementById(currentNode).style.background=PathColor;
+                currentNode= parent[currentNode];        
+            }
+        }
+
+        function runAlgorithm(){
+            var algo = document.getElementById('algorithm').value;
+            if(algo == 'dfs'){
+                dfs(startingPoint.id, destinationPoint.id);
+                colorNodes("#ffb215");
+            }
+            else if(algo == 'bfs'){
+                bfs(startingPoint.id, destinationPoint.id);
+                colorNodes("#ffb215");
+            }
+            else if(algo == 'a*'){
+                aStar(startingPoint.id , destinationPoint.id);
+            }
+            else if(algo == 'dijkstra'){
+                dijkstra(startingPoint.id, destinationPoint.id);
+                colorPath('#ccc','#ffb215');
+            }
+            
+        }
+        generateGrid();
+    </script>
+</html>
