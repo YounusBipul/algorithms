@@ -213,14 +213,6 @@
                 return;
             }
 
-            // for (i=0; i<cols; i++){
-            //     colString+="<td onclick='action(this)' id='"+i+"'></td>";
-            // }
-            // for (i=0; i<rows; i++){
-            //     rowString+="<tr>"+colString+"</tr>";
-            // }
-            // document.getElementById('grid').innerHTML=rowString;
-
             document.getElementById('grid').innerHTML = "";
             grid_info = {};
             is_visited = {};
@@ -340,7 +332,6 @@
                 currentNode = stack[0];
                 stack.splice(0,1);
                 is_visited[currentNode]=1;
-                // document.getElementById(currentNode).style.background="yellow";
                 if(currentNode == finishing_node){
                     break;
                 }
@@ -378,7 +369,6 @@
                     }
                     
                     new_distance = weight_info[currentNode][i]+distance[currentNode];
-                    // console.log(currentNode, adj, distance[currentNode], weight_info[currentNode][i], new_distance);
                     if(new_distance <= distance[adj]){
                         distance[adj]= new_distance;
                         parent[adj]= currentNode;
@@ -427,7 +417,6 @@
             currentNode = parent[finishing_node];
             document.getElementById(finishing_node).classList.add('visited');
             document.getElementById(finishing_node).style.background=PathColor;
-            // document.getElementById(finishing_node).style.background='yellow';
             while(currentNode != null){
                 document.getElementById(currentNode).classList.add('visited');
                 document.getElementById(currentNode).style.background=PathColor;
